@@ -8,52 +8,57 @@ from Data.Credentials import Credentials
 import pytest
 import time
 
-class Main:
-    service=Service(executable_path='chromedriver.exe')
-
-    opts=webdriver.ChromeOptions()
-    
-    # NUCLEAR OPTION - Run in Incognito (no password manager at all)
-    opts.add_argument("--incognito")
-    
-    # Network settings
-    opts.add_argument("--proxy-server='direct://'")
-    opts.add_argument("--proxy-bypass-list=*")
-    opts.add_argument("--disable-quic")
-    
-    # Disable ALL password manager features
-    opts.add_argument("--disable-save-password-bubble")
-    opts.add_argument("--disable-password-manager-reauthentication")
-    opts.add_argument("--disable-blink-features=AutomationControlled")
-    
-    # Disable automation detection and popups
-    opts.add_experimental_option("excludeSwitches", ["enable-automation", "enable-logging"])
-    opts.add_experimental_option('useAutomationExtension', False)
-    
-    # Aggressive preferences to kill password manager
-    opts.add_experimental_option("prefs", {
-        "credentials_enable_service": False,
-        "profile.password_manager_enabled": False,
-        "profile.default_content_setting_values.notifications": 2,
-        "profile.default_content_settings.popups": 0,
-        "password_manager_enabled": False
-    })
-    
-    opts.set_capability("acceptInsecureCerts", True)
-
-
-    driver=webdriver.Chrome(service=service, options=opts)
-
+class TestMain:
     baseUrl='https://www.saucedemo.com/v1/index.html'
     
-   
+    def setup_method(self):
+        """This method runs before each test - pytest will call this automatically"""
+        service=Service(executable_path='chromedriver.exe')
 
-    def __init__(self):
+        opts=webdriver.ChromeOptions()
+        
+        # NUCLEAR OPTION - Run in Incognito (no password manager at all)
+        opts.add_argument("--incognito")
+        
+        # Network settings
+        opts.add_argument("--proxy-server='direct://'")
+        opts.add_argument("--proxy-bypass-list=*")
+        opts.add_argument("--disable-quic")
+        
+        # Disable ALL password manager features
+        opts.add_argument("--disable-save-password-bubble")
+        opts.add_argument("--disable-password-manager-reauthentication")
+        opts.add_argument("--disable-blink-features=AutomationControlled")
+        
+        # Disable automation detection and popups
+        opts.add_experimental_option("excludeSwitches", ["enable-automation", "enable-logging"])
+        opts.add_experimental_option('useAutomationExtension', False)
+        
+        # Aggressive preferences to kill password manager
+        opts.add_experimental_option("prefs", {
+            "credentials_enable_service": False,
+            "profile.password_manager_enabled": False,
+            "profile.default_content_setting_values.notifications": 2,
+            "profile.default_content_settings.popups": 0,
+            "password_manager_enabled": False
+        })
+        
+        opts.set_capability("acceptInsecureCerts", True)
+
+        # Create the driver for this test
+        self.driver=webdriver.Chrome(service=service, options=opts)
+        
+        # Initialize controllers
         self.logincontrol=LoginController(self.driver)
         self.logoutcontrol=LogoutController(self.driver)
         self.maincontrol=MainController(self.driver)
         self.loginmaincontrol=LoginMainController(self.driver)
         self.credential=Credentials()
+    
+    def teardown_method(self):
+        """This method runs after each test - pytest will call this automatically"""
+        if hasattr(self, 'driver'):
+            self.driver.quit()
    
     def close_password_popup(self):
         """Close the annoying password breach popup if it appears"""
@@ -67,8 +72,9 @@ class Main:
             """)
         except:
             pass  # No popup, continue
-
-    def loginTest(self):
+     
+    @pytest.mark.logintest 
+    def test_loginTest(self):
 
         arr=self.credential.userData
 
@@ -103,7 +109,8 @@ class Main:
             self.logoutcontrol.logoutBtnClick()
     
     
-    def checkoutFlow(self):
+    @pytest.mark.flowtest
+    def test_checkoutFlow(self):
 
         self.driver.get(self.baseUrl)
 
@@ -181,11 +188,3 @@ class Main:
 
         
 
-        
-
-
-obj=Main()
-
-#obj.loginTest()
-
-obj.checkoutFlow()
