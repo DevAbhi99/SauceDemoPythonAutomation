@@ -20,15 +20,10 @@ class TestMain:
     def setup_method(self):
         """This method runs before each test - pytest will call this automatically"""
         import platform
-        import os
         
-        # Detect OS and set chromedriver path
-        if platform.system() == 'Windows':
-            chromedriver_path = 'chromedriver.exe'
-        else:  # Linux/Mac
-            chromedriver_path = '/usr/bin/chromedriver'  # Or just 'chromedriver' if in PATH
-        
-        service=Service(executable_path=chromedriver_path)
+        # Let Selenium Manager handle ChromeDriver automatically
+        # No need to specify path - Selenium 4.6+ has built-in driver management
+        service=Service()
 
         opts=webdriver.ChromeOptions()
         
