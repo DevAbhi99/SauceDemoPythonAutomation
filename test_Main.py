@@ -7,15 +7,37 @@ from Controllers.LoginController import LoginMainController
 from Data.Credentials import Credentials
 import pytest
 import time
+import os
 
 class TestMain:
     baseUrl='https://www.saucedemo.com/v1/index.html'
     
+    @classmethod
+    def setup_class(cls):
+        """Create directories for screenshots"""
+        os.makedirs('screenshots', exist_ok=True)
+    
     def setup_method(self):
         """This method runs before each test - pytest will call this automatically"""
-        service=Service(executable_path='chromedriver.exe')
+        import platform
+        import os
+        
+        # Detect OS and set chromedriver path
+        if platform.system() == 'Windows':
+            chromedriver_path = 'chromedriver.exe'
+        else:  # Linux/Mac
+            chromedriver_path = '/usr/bin/chromedriver'  # Or just 'chromedriver' if in PATH
+        
+        service=Service(executable_path=chromedriver_path)
 
         opts=webdriver.ChromeOptions()
+        
+        # Run in headless mode on Linux (Jenkins servers typically don't have GUI)
+        if platform.system() != 'Windows':
+            opts.add_argument("--headless")
+            opts.add_argument("--no-sandbox")
+            opts.add_argument("--disable-dev-shm-usage")
+            opts.add_argument("--disable-gpu")
         
         # NUCLEAR OPTION - Run in Incognito (no password manager at all)
         opts.add_argument("--incognito")
